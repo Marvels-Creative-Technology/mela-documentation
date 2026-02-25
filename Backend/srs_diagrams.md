@@ -10,20 +10,21 @@ This document contains 16 comprehensive system diagrams constructed to support t
 This visualizes the high-level boundary and the primary actors interacting with the entire Mela Guzo ecosystem.
 
 ```mermaid
-usecaseDiagram
-    actor Rider
-    actor Driver
-    actor Dispatcher
-    actor SuperAdmin
+graph TD
+    classDef actor fill:#f9f,stroke:#333,stroke-width:2px;
+    Rider((Rider)):::actor
+    Driver((Driver)):::actor
+    Dispatcher((Dispatcher)):::actor
+    SuperAdmin((SuperAdmin)):::actor
     
-    package "Mela Guzo System" {
-        usecase "Manage Ride Bookings" as UC1
-        usecase "Manage Digital Wallet" as UC2
-        usecase "Track Real-time Locations" as UC3
-        usecase "Manage Fleet Operations" as UC4
-        usecase "Provide Support/SOS" as UC5
-        usecase "Configure System Architecture" as UC6
-    }
+    subgraph "Mela Guzo System"
+        UC1(Manage Ride Bookings)
+        UC2(Manage Digital Wallet)
+        UC3(Track Real-time Locations)
+        UC4(Manage Fleet Operations)
+        UC5(Provide Support/SOS)
+        UC6(Configure System Architecture)
+    end
     
     Rider --> UC1
     Rider --> UC2
@@ -44,19 +45,20 @@ usecaseDiagram
 Details the exact systemic permissions and triggers available specifically to the passenger client app.
 
 ```mermaid
-usecaseDiagram
-    actor Rider
-    actor PaymentGateway
+graph TD
+    classDef actor fill:#f9f,stroke:#333,stroke-width:2px;
+    Rider((Rider)):::actor
+    PaymentGateway((PaymentGateway)):::actor
     
-    package "Rider Domain" {
-        usecase "Register & Verify OTP" as R1
-        usecase "Request Ride Estimate" as R2
-        usecase "Book Ride" as R3
-        usecase "Cancel Ride Request" as R4
-        usecase "Top-up Wallet" as R5
-        usecase "Pay via Wallet" as R6
-        usecase "Submit Driver Review" as R7
-    }
+    subgraph "Rider Domain"
+        R1(Register & Verify OTP)
+        R2(Request Ride Estimate)
+        R3(Book Ride)
+        R4(Cancel Ride Request)
+        R5(Top-up Wallet)
+        R6(Pay via Wallet)
+        R7(Submit Driver Review)
+    end
     
     Rider --> R1
     Rider --> R2
@@ -74,18 +76,19 @@ usecaseDiagram
 Focuses on the mobile application capabilities exclusively tailored for fleet drivers.
 
 ```mermaid
-usecaseDiagram
-    actor Driver
-    actor TelemetryNode
+graph TD
+    classDef actor fill:#f9f,stroke:#333,stroke-width:2px;
+    Driver((Driver)):::actor
+    TelemetryNode((TelemetryNode)):::actor
     
-    package "Driver Domain" {
-        usecase "Submit KYC Docs" as D1
-        usecase "Toggle Online Status" as D2
-        usecase "Accept/Reject Ride" as D3
-        usecase "Broadcast Location" as D4
-        usecase "Complete Trip" as D5
-        usecase "Withdraw Earnings" as D6
-    }
+    subgraph "Driver Domain"
+        D1(Submit KYC Docs)
+        D2(Toggle Online Status)
+        D3(Accept/Reject Ride)
+        D4(Broadcast Location)
+        D5(Complete Trip)
+        D6(Withdraw Earnings)
+    end
     
     Driver --> D1
     Driver --> D2
@@ -102,19 +105,20 @@ usecaseDiagram
 Visualizes the backend operations portal mapping for corporate staff.
 
 ```mermaid
-usecaseDiagram
-    actor ZonalDispatcher
-    actor SuperAdmin
+graph TD
+    classDef actor fill:#f9f,stroke:#333,stroke-width:2px;
+    ZonalDispatcher((ZonalDispatcher)):::actor
+    SuperAdmin((SuperAdmin)):::actor
     
-    package "Admin Portal" {
-        usecase "Monitor Regional Fleet" as A1
-        usecase "Assign Manual Ride" as A2
-        usecase "Approve/Ban Driver" as A3
-        usecase "Manage Promo Codes" as A4
-        usecase "Configure Dynamic Pricing" as A5
-        usecase "Generate Financial Reports" as A6
-        usecase "Manage User Roles" as A7
-    }
+    subgraph "Admin Portal"
+        A1(Monitor Regional Fleet)
+        A2(Assign Manual Ride)
+        A3(Approve/Ban Driver)
+        A4(Manage Promo Codes)
+        A5(Configure Dynamic Pricing)
+        A6(Generate Financial Reports)
+        A7(Manage User Roles)
+    end
     
     ZonalDispatcher --> A1
     ZonalDispatcher --> A2
@@ -244,30 +248,32 @@ sequenceDiagram
 Details the conditional branching involved in verifying a driver's legal application to join the fleet.
 
 ```mermaid
-activityDiagram
-    start
-    :Driver Registers Basic PII;
-    :Driver Uploads 
-    License & Car Details;
-    :Submit Application;
+stateDiagram-v2
+    [*] --> Start
+    Start --> DriverRegisters : Basic PII
+    DriverRegisters --> UploadsDocs : License & Car Details
+    UploadsDocs --> SubmitApplication
     
-    if (Automated Format Validation OK?) then (Yes)
-        :Set Status = PENDING_REVIEW;
-    else (No)
-        :Reject Docs (Requires Re-upload);
-        end
-    endif
+    SubmitApplication --> FormatValidation_Check
     
-    :Dispatcher Downloads Docs;
-    if (Docs Legally Valid?) then (Yes)
-        :Approve Application;
-        :Generate Authentication Credentials;
-        :Set Status = ACTIVE;
-    else (No)
-        :Reject with Reason;
-        :Notify via Email/SMS;
-    endif
-    stop
+    state FormatValidation_Check <<choice>>
+    FormatValidation_Check --> PENDING_REVIEW : Valid
+    FormatValidation_Check --> RejectedDocs : Invalid
+    
+    RejectedDocs --> [*] : Requires Re-upload
+    
+    PENDING_REVIEW --> DispatcherDownloads
+    DispatcherDownloads --> DocsLegallyValid_Check
+    
+    state DocsLegallyValid_Check <<choice>>
+    DocsLegallyValid_Check --> ApproveApplication : Valid
+    DocsLegallyValid_Check --> RejectWithReason : Invalid
+    
+    RejectWithReason --> [*] : Notify Email/SMS
+    
+    ApproveApplication --> GenerateAuth
+    GenerateAuth --> ACTIVE
+    ACTIVE --> [*]
 ```
 
 ---
@@ -276,26 +282,27 @@ activityDiagram
 Outlines the logic from booking creation to completion or cancellation.
 
 ```mermaid
-activityDiagram
-    start
-    :Rider Requests Fare Estimate;
-    :Rider Confirms Booking;
-    :System Broadcasts to Local Drivers;
+stateDiagram-v2
+    [*] --> RiderRequestsEstimate
+    RiderRequestsEstimate --> ConfirmBooking
+    ConfirmBooking --> BroadcastToDrivers
     
-    if (Driver Accepts Within 30s?) then (Yes)
-        :Booking State = ACCEPTED;
-        :Driver Travels to Pickup;
-        :Driver Triggers ARRIVED;
-        :Rider Boards Vehicle;
-        :Toggle State = ACTIVE_RIDE;
-        :Driver Reaches Destination;
-        :Trigger End Ride;
-        :Settle Wallets & Generate Receipt;
-    else (No/Timeout)
-        :Booking State = TIMEOUT;
-        :Notify Rider "No Drivers Found";
-    endif
-    stop
+    BroadcastToDrivers --> DriverAccepts_Check
+    
+    state DriverAccepts_Check <<choice>>
+    DriverAccepts_Check --> ACCEPTED : Yes (Within 30s)
+    DriverAccepts_Check --> TIMEOUT : No / Timeout
+    
+    TIMEOUT --> [*] : Notify "No Drivers Found"
+    
+    ACCEPTED --> DriverTravels
+    DriverTravels --> DriverArrived
+    DriverArrived --> RiderBoards
+    RiderBoards --> ACTIVE_RIDE
+    ACTIVE_RIDE --> ReachesDestination
+    ReachesDestination --> EndRideTrigger
+    EndRideTrigger --> SettleWallets
+    SettleWallets --> [*] : Generate Receipt
 ```
 
 ---
@@ -393,33 +400,33 @@ erDiagram
 Illustrates the internal software component relationships within the monolithic core.
 
 ```mermaid
-componentDiagram
-    package "Mobile Clients" {
-        [Rider Vue/Flutter App]
-        [Driver Vue/Flutter App]
-    }
+graph TD
+    subgraph Mobile_Clients ["Mobile Clients"]
+        RiderApp[Rider Vue/Flutter App]
+        DriverApp[Driver Vue/Flutter App]
+    end
     
-    package "Laravel Backend Engine" {
-        [Sanctum API Router]
-        [Ride Matching Engine]
-        [Digital Ledger Logic]
-        [Fleet Config Control]
-    }
+    subgraph Laravel_Backend_Engine ["Laravel Backend Engine"]
+        SanctumAPI[Sanctum API Router]
+        RideEngine[Ride Matching Engine]
+        LedgerLogic[Digital Ledger Logic]
+        FleetControl[Fleet Config Control]
+    end
     
-    package "Infrastructure Components" {
-        [Redis Cluster]
-        [Cloud MySQL Node]
-    }
+    subgraph Infrastructure_Components ["Infrastructure Components"]
+        RedisNode[(Redis Cluster)]
+        MySQLNode[(Cloud MySQL Node)]
+    end
     
-    [Rider Vue/Flutter App] --> [Sanctum API Router]
-    [Driver Vue/Flutter App] --> [Sanctum API Router]
+    RiderApp --> SanctumAPI
+    DriverApp --> SanctumAPI
     
-    [Sanctum API Router] --> [Ride Matching Engine]
-    [Sanctum API Router] --> [Digital Ledger Logic]
+    SanctumAPI --> RideEngine
+    SanctumAPI --> LedgerLogic
     
-    [Ride Matching Engine] --> [Redis Cluster]
-    [Digital Ledger Logic] --> [Cloud MySQL Node]
-    [Fleet Config Control] --> [Cloud MySQL Node]
+    RideEngine --> RedisNode
+    LedgerLogic --> MySQLNode
+    FleetControl --> MySQLNode
 ```
 
 ---
