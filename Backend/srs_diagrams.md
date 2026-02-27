@@ -489,3 +489,54 @@ flowchart LR
     EngineWorker
     end
 ```
+
+## 7. Threat Modeling (STRIDE)
+
+### 7.1 STRIDE Threat Assessment Model
+To ensure rigorous security compliance, the platform's core architecture has been analyzed against the STRIDE threat classification model (Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege).
+
+The following diagram maps these theoretical vulnerability vectors against the primary system components and illustrates the enforced systemic mitigations.
+
+```mermaid
+graph TD
+    classDef spoofing fill:#ff9999,stroke:#333,stroke-width:2px;
+    classDef tampering fill:#ffcc99,stroke:#333,stroke-width:2px;
+    classDef repudiation fill:#ffff99,stroke:#333,stroke-width:2px;
+    classDef infodisc fill:#ccff99,stroke:#333,stroke-width:2px;
+    classDef dos fill:#99ccff,stroke:#333,stroke-width:2px;
+    classDef eop fill:#cc99ff,stroke:#333,stroke-width:2px;
+
+    %% Components
+    MobileApp(Mobile Client)
+    API[API Gateway / WAF]
+    AuthLayer[Auth Layer Sanctum]
+    DB[(Core MySQL DB)]
+    Ledger[Wallet Ledger]
+
+    %% Threat Classifications Mapping
+    Spoofing(Spoofing Identity):::spoofing
+    Tampering(Tampering with Data):::tampering
+    Repudiation(Repudiation):::repudiation
+    InfoDisc(Information Disclosure):::infodisc
+    DoS(Denial of Service):::dos
+    EoP(Elevation of Privilege):::eop
+
+    %% Link threats to vulnerable modules
+    Spoofing -.->|Mitigated by OTP & MFA| MobileApp
+    Spoofing -.->|Mitigated by Bearer Tokens| AuthLayer
+    
+    Tampering -.->|Mitigated by TLS 1.3 & WAF| API
+    Tampering -.->|Mitigated by Prepared Statements| DB
+    
+    Repudiation -.->|Mitigated by Audit Logging| Ledger
+    Repudiation -.->|Mitigated by App Logs| API
+    
+    InfoDisc -.->|Mitigated by Data Encryption| DB
+    InfoDisc -.->|Mitigated by App Obfuscation| MobileApp
+    
+    DoS -.->|Mitigated by Cloudflare Shield| API
+    DoS -.->|Mitigated by Rate Limiting| AuthLayer
+    
+    EoP -.->|Mitigated by Role Based Access| AuthLayer
+    EoP -.->|Mitigated by Least Privilege Accounts| DB
+```
