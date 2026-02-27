@@ -152,3 +152,57 @@ flowchart LR
     
     BackendProcessing -- Status: Approved --> UI_Unlocked[Enable Core Map Dashboard<br/>Unlock ONLINE toggle]
 ```
+## 6. Threat Model
+**Target SRS Section:** 
+```mermaid
+flowchart TD
+    App((Mela Driver App))
+
+    subgraph S ["Spoofing (Identity)"]
+        S_Threat["Threat: Forged Driver Identity"]
+        S_Mitigate["Mitigation: SMS OTP & Secure JWT"]
+    end
+
+    subgraph T ["Tampering (Data)"]
+        T_Threat["Threat: Altered Location/Fare Data"]
+        T_Mitigate["Mitigation: WSS & TLS 1.2+ Encryption"]
+    end
+
+    subgraph R ["Repudiation"]
+        R_Threat["Threat: Denying Trip Acceptance"]
+        R_Mitigate["Mitigation: Immutable Firebase Audit Logs"]
+    end
+
+    subgraph I ["Information Disclosure"]
+        I_Threat["Threat: Leaked Rider/Driver PII"]
+        I_Mitigate["Mitigation: Number Masking & Hive AES-256"]
+    end
+
+    subgraph D ["Denial of Service"]
+        D_Threat["Threat: API/Dispatch Overload"]
+        D_Mitigate["Mitigation: Client Timeouts & API Rate Limits"]
+    end
+
+    subgraph E ["Elevation of Privilege"]
+        E_Threat["Threat: Driver Mutating Other Driver Data"]
+        E_Mitigate["Mitigation: Strict Firebase Auth Rules"]
+    end
+
+    %% Relationships
+    App -->|Defends Against| S
+    App -->|Defends Against| T
+    App -->|Defends Against| R
+    App -->|Defends Against| I
+    App -->|Defends Against| D
+    App -->|Defends Against| E
+
+    S_Threat --> S_Mitigate
+    T_Threat --> T_Mitigate
+    R_Threat --> R_Mitigate
+    I_Threat --> I_Mitigate
+    D_Threat --> D_Mitigate
+    E_Threat --> E_Mitigate
+
+```
+
+---
